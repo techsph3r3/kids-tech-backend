@@ -6,19 +6,16 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
+// ✅ Add a root route to confirm the API is working
+app.get('/', (req, res) => {
+  res.send('✅ Kids Tech Backend is running!');
+});
+
 const TENANT_ID = process.env.TENANT_ID;
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const NOTEBOOK_NAME = "Tech2025_2026";
 const SECTION_NAME = "Quarter 1";
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-app.get('/', (req, res) => {
-  res.send('✅ Kids Tech Backend is running!');
-});
-
 
 app.get('/api/pages', async (req, res) => {
   try {
@@ -73,3 +70,4 @@ app.get('/api/pages', async (req, res) => {
 app.listen(port, () => {
   console.log(`✅ Server running on port ${port}`);
 });
+
