@@ -56,4 +56,13 @@ module.exports = async (req, res) => {
 
     return res.status(200).json(graphResponse.data);
   } catch (error) {
-    const details
+    const details = {
+      message: error.message,
+      data: error?.response?.data,
+      status: error?.response?.status,
+    };
+    console.error("OBO ERROR:", details);
+    return res.status(500).json({ error: "OBO flow failed", details });
+  }
+};
+
