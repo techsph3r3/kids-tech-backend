@@ -29,11 +29,13 @@ module.exports = async (req, res) => {
     );
 
     res.status(200).json(graphResponse.data);
-  } catch (error) {
-    console.error("Graph API Error:", error?.response?.data || error.message);
-    res.status(500).json({
-      error: "Failed to fetch OneNote data",
-      details: error?.response?.data || error.message,
-    });
-  }
+} catch (error) {
+  const errorData = error?.response?.data || error.message || "Unknown error";
+  console.error("Graph API Error:", errorData);
+
+  res.status(500).json({
+    error: "Failed to fetch OneNote data",
+    details: errorData,
+  });
+}
 };
