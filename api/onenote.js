@@ -1,11 +1,12 @@
 const axios = require("axios");
 
 module.exports = async (req, res) => {
-  // ✅ CORS headers to allow frontend to reach this backend
+  // ✅ Allow frontend calls from Vercel
   res.setHeader("Access-Control-Allow-Origin", "https://kids-tech-frontend.vercel.app");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
+  // ✅ Handle preflight request
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
@@ -16,7 +17,6 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: "Missing Authorization header" });
   }
 
-  // Get env vars
   const tenantId = process.env.TENANT_ID;
   const clientId = process.env.CLIENT_ID;
   const clientSecret = process.env.CLIENT_SECRET;
@@ -24,11 +24,9 @@ module.exports = async (req, res) => {
   const notebookId = process.env.ONENOTE_NOTEBOOK_ID;
 
   try {
-    // ✅ Step 1: Exchange token using OBO flow
-    const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
-
+    // Step 1: Exchange token using OBO flow
     const tokenResponse = await axios.post(
-      tokenUrl,
+      `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
       new URLSearchParams({
         client_id: clientId,
         client_secret: clientSecret,
@@ -39,5 +37,23 @@ module.exports = async (req, res) => {
       }),
       {
         headers: {
-          "Content-Type": "
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
 
+    const oboAccessToken = tokenResponse.data.access_token;
+
+    // Step 2: Use token to call Graph on behalf of fixed backend account
+    const graphResponse = await axios.get(
+      `https://graph.microsoft.com/v1.0/users/${backendUserId}/onenote/notebooks/${notebookId}/sections`,
+      {
+        headers: {
+          Authorization: `Bearer ${oboAccessToken}`,
+        },
+      }
+    );
+
+    return res.status(200).json(graphResponse.data);
+  } catch (error) {
+    const details
