@@ -1,41 +1,43 @@
 const axios = require("axios");
 
 module.exports = async (req, res) => {
-  // ✅ Handle CORS
+  // ✅ CORS headers to allow frontend to reach this backend
   res.setHeader("Access-Control-Allow-Origin", "https://kids-tech-frontend.vercel.app");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   if (req.method === "OPTIONS") {
-    return res.status(200).end(); // ✅ Preflight handled
+    return res.status(200).end();
   }
 
-  const authHeader = req.headers.authorization;
+  const userAccessToken = req.headers.authorization?.split(" ")[1];
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Missing or invalid auth token" });
+  if (!userAccessToken) {
+    return res.status(401).json({ error: "Missing Authorization header" });
   }
 
-  const accessToken = authHeader.split(" ")[1];
+  // Get env vars
+  const tenantId = process.env.TENANT_ID;
+  const clientId = process.env.CLIENT_ID;
+  const clientSecret = process.env.CLIENT_SECRET;
+  const backendUserId = process.env.BACKEND_USER_ID;
+  const notebookId = process.env.ONENOTE_NOTEBOOK_ID;
 
   try {
-    const graphResponse = await axios.get(
-      "https://graph.microsoft.com/v1.0/me/onenote/notebooks",
+    // ✅ Step 1: Exchange token using OBO flow
+    const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
+
+    const tokenResponse = await axios.post(
+      tokenUrl,
+      new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        requested_token_use: "on_behalf_of",
+        scope: "https://graph.microsoft.com/.default",
+        assertion: userAccessToken,
+      }),
       {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+          "Content-Type": "
 
-    res.status(200).json(graphResponse.data);
-} catch (error) {
-  const errorData = error?.response?.data || error.message || "Unknown error";
-  console.error("Graph API Error:", errorData);
-
-  res.status(500).json({
-    error: "Failed to fetch OneNote data",
-    details: errorData,
-  });
-}
-};
