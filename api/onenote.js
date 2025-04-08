@@ -1,6 +1,15 @@
 const axios = require("axios");
 
 module.exports = async (req, res) => {
+  // ✅ Handle CORS
+  res.setHeader("Access-Control-Allow-Origin", "https://kids-tech-frontend.vercel.app");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end(); // ✅ Preflight handled
+  }
+
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -11,7 +20,7 @@ module.exports = async (req, res) => {
 
   try {
     const graphResponse = await axios.get(
-      `https://graph.microsoft.com/v1.0/me/onenote/notebooks`,
+      "https://graph.microsoft.com/v1.0/me/onenote/notebooks",
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -28,4 +37,3 @@ module.exports = async (req, res) => {
     });
   }
 };
-
